@@ -69,6 +69,8 @@
                   android:name="android.support.FILE_PROVIDER_PATHS"
                   android:resource="@xml/camera_provider_paths"/>
           </provider>
+          
+          <activity android:name="org.apache.cordova.camera.CustomImagePickerActivity" />
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="queries">
@@ -88,11 +90,15 @@
         </config-file>
 
         <source-file src="src/android/CameraLauncher.java" target-dir="src/org/apache/cordova/camera" />
+        <source-file src="src/android/CustomImagePickerActivity.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileHelper.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/ExifHelper.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileProvider.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/GalleryPathVO.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/xml/camera_provider_paths.xml" target-dir="res/xml" />
+        <source-file src="src/android/res/circle_background.xml" target-dir="res/drawable" />
+        <source-file src="src/android/res/image_selection_item.xml" target-dir="res/layout" />
+        <source-file src="src/android/res/activity_custom_image_picker.xml" target-dir="res/layout" />
 
         <preference name="ANDROIDX_CORE_VERSION" default="1.6.+"/>
         <framework src="androidx.core:core:$ANDROIDX_CORE_VERSION" />
@@ -100,6 +106,7 @@
         <js-module src="www/CameraPopoverHandle.js" name="CameraPopoverHandle">
             <clobbers target="CameraPopoverHandle" />
           </js-module>
+ 
       </platform>
 
      <!-- ios -->
@@ -122,6 +129,8 @@
          <header-file src="src/ios/CDVJpegHeaderWriter.h" />
          <source-file src="src/ios/CDVJpegHeaderWriter.m" />
          <header-file src="src/ios/CDVExif.h" />
+         <header-file src="src/ios/CustomImagePicker.h" />
+         <source-file src="src/ios/CustomImagePicker.m" />
          <framework src="ImageIO.framework" weak="true" />
          <framework src="CoreLocation.framework" />
          <framework src="CoreGraphics.framework" />

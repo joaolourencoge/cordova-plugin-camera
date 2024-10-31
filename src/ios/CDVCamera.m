@@ -18,6 +18,7 @@
  */
 
 #import "CDVCamera.h"
+#import "CustomImagePicker.h"
 #import "CDVJpegHeaderWriter.h"
 #import "UIImage+CropScaleOrientation.h"
 #import <ImageIO/CGImageProperties.h>
@@ -205,37 +206,11 @@ static NSString* toBase64(NSData* data) {
     }];
 }
 
-- (void)showCameraPicker:(NSString*)callbackId withOptions:(CDVPictureOptions *) pictureOptions
-{
-    // Perform UI operations on the main thread
+- (void)showCameraPicker:(NSString*)callbackId withOptions:(CDVPictureOptions *) pictureOptions {
     dispatch_async(dispatch_get_main_queue(), ^{
-        CDVCameraPicker* cameraPicker = [CDVCameraPicker createFromPictureOptions:pictureOptions];
-        self.pickerController = cameraPicker;
-
-        cameraPicker.delegate = self;
-        cameraPicker.callbackId = callbackId;
-        // we need to capture this state for memory warnings that dealloc this object
-        cameraPicker.webView = self.webView;
-
-        // If a popover is already open, close it; we only want one at a time.
-        if (([[self pickerController] pickerPopoverController] != nil) && [[[self pickerController] pickerPopoverController] isPopoverVisible]) {
-            [[[self pickerController] pickerPopoverController] dismissPopoverAnimated:YES];
-            [[[self pickerController] pickerPopoverController] setDelegate:nil];
-            [[self pickerController] setPickerPopoverController:nil];
-        }
-
-        if ([self popoverSupported] && (pictureOptions.sourceType != UIImagePickerControllerSourceTypeCamera)) {
-            if (cameraPicker.pickerPopoverController == nil) {
-                cameraPicker.pickerPopoverController = [[NSClassFromString(@"UIPopoverController") alloc] initWithContentViewController:cameraPicker];
-            }
-            [self displayPopover:pictureOptions.popoverOptions];
-            self.hasPendingOperation = NO;
-        } else {
-            cameraPicker.modalPresentationStyle = UIModalPresentationCurrentContext;
-            [self.viewController presentViewController:cameraPicker animated:YES completion:^{
-                self.hasPendingOperation = NO;
-            }];
-        }
+        CustomImagePicker *imagePicker = [[CustomImagePicker alloc] init];
+        imagePicker.delegate = self; // Set delegate if needed
+        [self.viewController presentViewController:imagePicker animated:YES completion:nil];
     });
 }
 
@@ -654,34 +629,37 @@ static NSString* toBase64(NSData* data) {
     __weak CDVCamera* weakSelf = self;
 
     dispatch_block_t invoke = ^(void) {
-        __block CDVPluginResult* result = nil;
-
         NSString* mediaType = [info objectForKey:UIImagePickerControllerMediaType];
         if ([mediaType isEqualToString:(NSString*)kUTTypeImage]) {
-            [weakSelf resultForImage:cameraPicker.pictureOptions info:info completion:^(CDVPluginResult* res) {
-                if (![self usesGeolocation] || picker.sourceType != UIImagePickerControllerSourceTypeCamera) {
-                    [weakSelf.commandDelegate sendPluginResult:res callbackId:cameraPicker.callbackId];
-                    weakSelf.hasPendingOperation = NO;
-                    weakSelf.pickerController = nil;
+            NSMutableArray *selectedImages = [NSMutableArray array];
+
+            // Check if multiple images were selected
+            if (info[UIImagePickerControllerReferenceURL]) {
+                NSArray *urls = info[UIImagePickerControllerReferenceURL];
+                for (NSURL *url in urls) {
+                    // Process each selected image
+                    [weakSelf resultForImage:cameraPicker.pictureOptions info:@{UIImagePickerControllerReferenceURL: url} completion:^(CDVPluginResult* res) {
+                        [selectedImages addObject:res];
+                    }];
                 }
-            }];
-        }
-        else {
-            result = [weakSelf resultForVideo:info];
+            } else {
+                // Single image selected
+                [weakSelf resultForImage:cameraPicker.pictureOptions info:info completion:^(CDVPluginResult* res) {
+                    [selectedImages addObject:res];
+                }];
+            }
+
+            // Send the results back to the callback
+            [weakSelf.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:selectedImages] callbackId:cameraPicker.callbackId];
+        } else {
+            CDVPluginResult* result = [weakSelf resultForVideo:info];
             [weakSelf.commandDelegate sendPluginResult:result callbackId:cameraPicker.callbackId];
-            weakSelf.hasPendingOperation = NO;
-            weakSelf.pickerController = nil;
         }
+        weakSelf.hasPendingOperation = NO;
+        weakSelf.pickerController = nil;
     };
 
-    if (cameraPicker.pictureOptions.popoverSupported && (cameraPicker.pickerPopoverController != nil)) {
-        [cameraPicker.pickerPopoverController dismissPopoverAnimated:YES];
-        cameraPicker.pickerPopoverController.delegate = nil;
-        cameraPicker.pickerPopoverController = nil;
-        invoke();
-    } else {
-        [[cameraPicker presentingViewController] dismissViewControllerAnimated:YES completion:invoke];
-    }
+    [[cameraPicker presentingViewController] dismissViewControllerAnimated:YES completion:invoke];
 }
 
 // older api calls newer didFinishPickingMediaWithInfo
