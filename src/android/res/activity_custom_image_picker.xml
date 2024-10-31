@@ -3,11 +3,15 @@
     android:id="@+id/imageContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:clickable="true" 
+    android:focusable="true">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:spanCount="3" />
+        app:spanCount="3"
+    android:clickable="true" 
+    android:focusable="true" />
 </LinearLayout>

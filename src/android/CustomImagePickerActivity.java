@@ -28,9 +28,10 @@ import java.util.List;
 import com.growthengineering.dev1.R;
 import androidx.annotation.NonNull;
 import com.growthengineering.dev1.R;
+import com.bumptech.glide.Glide;
 
 public class CustomImagePickerActivity extends Activity {
-  private List<Uri> selectedImageUris = new ArrayList<>();
+  List<Uri> selectedImageUris = new ArrayList<>();
   private RecyclerView recyclerView;
   private ImageAdapter imageAdapter;
   private List<Uri> imageUris = new ArrayList<>();
@@ -48,6 +49,7 @@ public class CustomImagePickerActivity extends Activity {
     imageAdapter = new ImageAdapter(this, imageUris);
     recyclerView.setAdapter(imageAdapter);
     recyclerView.setLayoutManager(new GridLayoutManager(this, 3)); // 3 columns
+    recyclerView.setClickable(true);
 
     loadImages();
 
@@ -69,25 +71,25 @@ public class CustomImagePickerActivity extends Activity {
     ContentResolver contentResolver = getContentResolver();
 
     Cursor cursor = contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            MediaStore.Images.Media.DATE_TAKEN + " DESC"
+      MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+      projection,
+      null,
+      null,
+      MediaStore.Images.Media.DATE_TAKEN + " DESC"
     );
 
     if (cursor != null) {
-        Log.e("CustomImagePickerActivity", "Cursor count: " + cursor.getCount());
+      Log.e("CustomImagePickerActivity", "Cursor count: " + cursor.getCount());
 
-        while (cursor.moveToNext()) {
-            int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-            long id = cursor.getLong(idColumn);
-            Uri imageUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
-            imageUris.add(imageUri); // Add the image URI to the list
-        }
-        cursor.close();
+      while (cursor.moveToNext()) {
+        int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+        long id = cursor.getLong(idColumn);
+        Uri imageUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
+        imageUris.add(imageUri); // Add the image URI to the list
+      }
+      cursor.close();
     } else {
-        Log.e("CustomImagePickerActivity", "Cursor is null");
+      Log.e("CustomImagePickerActivity", "Cursor is null");
     }
 
     imageAdapter.notifyDataSetChanged(); // Notify the adapter of data changes
@@ -105,16 +107,15 @@ public class CustomImagePickerActivity extends Activity {
     ImageView imageView = itemView.findViewById(R.id.imageView);
     TextView selectionIndicator = itemView.findViewById(R.id.selectionIndicator);
 
-    // Load image using BitmapFactory
-    Bitmap bitmap = loadBitmapFromUri(imageUri);
-    if (bitmap != null) {
-      imageView.setImageBitmap(bitmap);
-    } else {
-      Log.e("CustomImagePickerActivity", "Failed to load bitmap from URI: " + imageUri);
-    }
+    // Load image using Glide
+    Glide.with(this)
+      .load(imageUri)
+      .into(imageView);
 
     // Set an OnClickListener to handle image selection
-    itemView.setOnClickListener(v -> {
+     itemView.setOnClickListener(v -> {
+      Log.e("CustomImagePickerActivity", String.valueOf(v));
+
       if (!selectedImageUris.contains(imageUri)) {
         selectedImageUris.add(imageUri);
         selectionIndicator.setText(String.valueOf(selectedImageUris.size())); // Update selection number
@@ -124,7 +125,6 @@ public class CustomImagePickerActivity extends Activity {
         selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
       }
     });
-
     imageContainer.addView(itemView);
   }
 
