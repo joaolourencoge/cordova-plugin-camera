@@ -91,6 +91,7 @@
 
         <source-file src="src/android/CameraLauncher.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/CustomImagePickerActivity.java" target-dir="src/org/apache/cordova/camera" />
+        <source-file src="src/android/ImageAdapter.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileHelper.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/ExifHelper.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileProvider.java" target-dir="src/org/apache/cordova/camera" />
@@ -102,6 +103,10 @@
 
         <preference name="ANDROIDX_CORE_VERSION" default="1.6.+"/>
         <framework src="androidx.core:core:$ANDROIDX_CORE_VERSION" />
+
+        <preference name="ANDROIDX_RECYCLER_VIEW_VERSION" default="1.2.1"/>
+        <framework src="androidx.recyclerview:recyclerview:$ANDROIDX_RECYCLER_VIEW_VERSION" />
+
 
         <js-module src="www/CameraPopoverHandle.js" name="CameraPopoverHandle">
             <clobbers target="CameraPopoverHandle" />
