@@ -25,13 +25,55 @@
     // Initialize selectedAssets
     self.selectedAssets = [NSMutableArray array];
     
+    // Create a header view
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 60)];
+    headerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7]; // Set background color with transparency
+
+    // Add title label to header
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, headerView.bounds.size.width, 60)];
+    titleLabel.text = @"";
+    titleLabel.textColor = [UIColor whiteColor];
+    titleLabel.textAlignment = NSTextAlignmentCenter;
+    [headerView addSubview:titleLabel];
+
+    // Add Cancel button
+    UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [cancelButton addTarget:self action:@selector(cancelImageSelection) forControlEvents:UIControlEventTouchUpInside];
+    cancelButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
+    [headerView addSubview:cancelButton];
+
+    // Add Done button
+    UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [doneButton setTitle:@"Done" forState:UIControlStateNormal];
+    [doneButton addTarget:self action:@selector(returnSelectedImages) forControlEvents:UIControlEventTouchUpInside];
+    doneButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
+    [headerView addSubview:doneButton];
+
+    // Set button styles to match
+    [cancelButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    doneButton.backgroundColor = [UIColor clearColor]; // Match Cancel button style
+
+    // Set constraints for the buttons
+    [NSLayoutConstraint activateConstraints:@[
+        [cancelButton.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:20],
+        [cancelButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+        
+        [doneButton.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-20],
+        [doneButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
+    ]];
+
+    // Add the header view to the main view
+    [self.view addSubview:headerView];
+
     // Initialize the collection view layout
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-    layout.itemSize = CGSizeMake(100, 100); // Set the size of each item
-    layout.minimumInteritemSpacing = 10; // Set spacing between items
-    layout.minimumLineSpacing = 10; // Set spacing between lines
+    layout.itemSize = CGSizeMake(130, 130); // Increased size to reduce black space
+    layout.minimumInteritemSpacing = 0; // Adjust spacing between items
+    layout.minimumLineSpacing = 0; // Adjust spacing between lines
 
-    self.collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
+    self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(headerView.frame), self.view.bounds.size.width, self.view.bounds.size.height - CGRectGetMaxY(headerView.frame)) collectionViewLayout:layout];
     
     // Set the data source and delegate
     self.collectionView.dataSource = self;
@@ -45,22 +87,6 @@
     
     // Load images
     [self loadImages];
-
-    // Add Done button
-    UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [doneButton setTitle:@"Done" forState:UIControlStateNormal];
-    doneButton.backgroundColor = [UIColor blueColor]; // Set a visible color for testing
-    doneButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
-    [doneButton addTarget:self action:@selector(returnSelectedImages) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:doneButton];
-
-    // Set constraints for the button
-    [NSLayoutConstraint activateConstraints:@[
-        [doneButton.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [doneButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [doneButton.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20],
-        [doneButton.heightAnchor constraintEqualToConstant:40]
-    ]];
 }
 
 - (void)loadImages {
@@ -97,13 +123,15 @@
         imageView.clipsToBounds = YES;
         cell.backgroundView = imageView; // Set the image view as the cell's background
         
-        // Remove any existing badge
-        [[cell.contentView viewWithTag:100] removeFromSuperview];
-        
-        // Check if the asset is selected and update the cell appearance
+        // Remove existing badge if any
+        UILabel *existingBadge = [cell.contentView viewWithTag:100];
+        if (existingBadge) {
+            [existingBadge removeFromSuperview];
+        }
+
+        // Add badge if the asset is selected
         if ([self.selectedAssets containsObject:asset]) {
-            // Create badge
-            UILabel *badgeLabel = [[UILabel alloc] initWithFrame:CGRectMake(70, 0, 30, 30)]; // Adjust position as needed
+            UILabel *badgeLabel = [[UILabel alloc] initWithFrame:CGRectMake(cell.bounds.size.width - 40, cell.bounds.size.height - 40, 30, 30)]; // Bottom-right position
             badgeLabel.tag = 100; // Set a tag to identify the badge later
             badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)[self.selectedAssets indexOfObject:asset] + 1]; // Display the index + 1
             badgeLabel.textAlignment = NSTextAlignmentCenter;
@@ -191,6 +219,11 @@
     
     // Reload the cell to update its appearance
     [collectionView reloadItemsAtIndexPaths:@[indexPath]];
+}
+
+// Method to handle cancel action
+- (void)cancelImageSelection {
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

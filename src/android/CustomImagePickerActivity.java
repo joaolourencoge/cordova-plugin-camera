@@ -54,6 +54,10 @@ public class CustomImagePickerActivity extends Activity {
 
     loadImages();
 
+    // Set up the Cancel button
+    Button btnCancel = findViewById(R.id.btnCancel);
+    btnCancel.setOnClickListener(v -> finish()); // Close the activity
+
     // Set up the Done button
     Button btnDone = findViewById(R.id.btnDone);
     btnDone.setOnClickListener(v -> returnSelectedImages());
