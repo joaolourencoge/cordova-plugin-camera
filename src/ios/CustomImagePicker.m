@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
+#import <Cordova/CDV.h>
 
 @protocol CustomImagePickerDelegate <NSObject>
 - (void)didSelectImages:(NSArray<UIImage *> *)images;
@@ -12,6 +13,7 @@
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray<PHAsset *> *selectedAssets;
 @property (nonatomic, strong) NSMutableArray<PHAsset *> *allAssets;
+@property (nonatomic, strong) NSString *callbackId;
 
 @end
 
@@ -120,27 +122,60 @@
 
 - (void)returnSelectedImages {
     NSMutableArray *selectedImages = [NSMutableArray array];
+    NSMutableArray<NSString *> *originalPaths = [NSMutableArray array]; // Array to hold original paths
     
     for (PHAsset *asset in self.selectedAssets) {
         PHImageManager *imageManager = [PHImageManager defaultManager];
-        [imageManager requestImageForAsset:asset
-                          targetSize:PHImageManagerMaximumSize
-                         contentMode:PHImageContentModeAspectFill
-                                options:nil
-                          resultHandler:^(UIImage *result, NSDictionary *info) {
-            if (result) {
-                [selectedImages addObject:result];
+        
+        // Request the original image data and metadata
+        [imageManager requestImageDataForAsset:asset
+                                  options:nil
+                            resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
+            if (imageData) {
+                // Create a UIImage from the original data
+                UIImage *image = [UIImage imageWithData:imageData];
+                if (image) {
+                    // Adjust the image orientation
+                    image = [self fixOrientation:image withOrientation:orientation];
+                    [selectedImages addObject:image];
+                }
+                
+                // Create a unique file name for the original image
+                NSString *fileName = [NSString stringWithFormat:@"image_%@.%@", [[NSUUID UUID] UUIDString], [dataUTI pathExtension]];
+                NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
+                
+                // Save the original image data directly to file
+                NSError *error = nil;
+                if ([imageData writeToFile:filePath options:NSAtomicWrite error:&error]) {
+                    [originalPaths addObject:filePath]; // Add the file path to the array
+                } else {
+                    NSLog(@"Failed to save image to path: %@, error: %@", filePath, error.localizedDescription);
+                }
             }
+            
             // Check if all images have been processed
             if (selectedImages.count == self.selectedAssets.count) {
                 NSLog(@"Delegate: %@", self.delegate); // Log the delegate
-                if ([self.delegate respondsToSelector:@selector(didSelectImages:)]) {
-                    [self.delegate didSelectImages:selectedImages]; // Notify the delegate
-                }
+                
+                // Call the delegate method with both images and their original paths
+                [self.delegate didSelectImages:selectedImages ];
+                
                 [self dismissViewControllerAnimated:YES completion:nil];
             }
         }];
     }
+}
+
+// Method to fix the orientation of the image
+- (UIImage *)fixOrientation:(UIImage *)image withOrientation:(UIImageOrientation)orientation {
+    if (orientation == UIImageOrientationUp) return image; // No need to fix
+
+    UIGraphicsBeginImageContextWithOptions(image.size, NO, image.scale);
+    [image drawInRect:(CGRect){0, 0, image.size}];
+    UIImage *normalizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return normalizedImage;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {

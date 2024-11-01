@@ -39,7 +39,7 @@
 #define CDV_PHOTO_PREFIX @"cdv_photo_"
 
 static NSSet* org_apache_cordova_validArrowDirections;
-
+NSString* _callbackId;
 static NSString* toBase64(NSData* data) {
     SEL s1 = NSSelectorFromString(@"cdv_base64EncodedString");
     SEL s2 = NSSelectorFromString(@"base64EncodedString");
@@ -206,10 +206,11 @@ static NSString* toBase64(NSData* data) {
     }];
 }
 
-- (void)showCameraPicker:(NSString*)callbackId withOptions:(CDVPictureOptions *) pictureOptions {
+- (void)showCameraPicker:(NSString*)callbackId withOptions:(CDVPictureOptions *)pictureOptions {
     dispatch_async(dispatch_get_main_queue(), ^{
         CustomImagePicker *imagePicker = [[CustomImagePicker alloc] init];
         imagePicker.delegate = self; // Set delegate to self
+        _callbackId = callbackId; // Set the callbackId here
         [self.viewController presentViewController:imagePicker animated:YES completion:nil];
     });
 }
@@ -836,6 +837,8 @@ static NSString* toBase64(NSData* data) {
 }
 
 - (void)didSelectImages:(NSArray<UIImage *> *)images {
+    NSLog(@"didSelectImages called with %lu images", (unsigned long)images.count);
+    
     NSMutableArray *imagePaths = [NSMutableArray array];
     
     for (UIImage *image in images) {
@@ -852,11 +855,17 @@ static NSString* toBase64(NSData* data) {
         }
     }
     
-    // Send the file paths back to the Cordova webview
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:imagePaths];
-    [self.commandDelegate sendPluginResult:result callbackId:self.pickerController.callbackId];
+    // Log the callback ID
+    NSLog(@"Callback ID: %@", _callbackId);
     
-    NSLog(@"Selected image paths: %@", imagePaths);
+    // Send the file paths back to the Cordova webview
+    //if (command.callbackId) {
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:imagePaths];
+        [self.commandDelegate sendPluginResult:result callbackId:_callbackId];
+   //     NSLog(@"Selected image paths: %@", imagePaths);
+    //} else {
+   //     NSLog(@"Callback ID is nil, cannot send result to webview.");
+   // }
 }
 
 - (void)didCancelImageSelection {
