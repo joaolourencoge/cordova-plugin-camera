@@ -14,6 +14,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -52,6 +53,10 @@ public class CustomImagePickerActivity extends Activity {
     recyclerView.setClickable(true);
 
     loadImages();
+
+    // Set up the Done button
+    Button btnDone = findViewById(R.id.btnDone);
+    btnDone.setOnClickListener(v -> returnSelectedImages());
 
     recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
       @Override
@@ -113,8 +118,9 @@ public class CustomImagePickerActivity extends Activity {
       .into(imageView);
 
     // Set an OnClickListener to handle image selection
-     itemView.setOnClickListener(v -> {
+    itemView.setOnClickListener(v -> {
       Log.e("CustomImagePickerActivity", String.valueOf(v));
+      Log.e("CustomImagePickerActivity", String.valueOf(imageUri));
 
       if (!selectedImageUris.contains(imageUri)) {
         selectedImageUris.add(imageUri);
@@ -139,9 +145,33 @@ public class CustomImagePickerActivity extends Activity {
 
   // When done selecting images, return the result
   private void returnSelectedImages() {
+    Log.d("CustomImagePickerActivity", "Selected URIs: " + selectedImageUris.toString());
+    if (selectedImageUris.isEmpty()) {
+      Log.e("CustomImagePickerActivity", "No images selected.");
+      setResult(Activity.RESULT_CANCELED);
+      finish();
+      return;
+    }
+
     Intent resultIntent = new Intent();
-    resultIntent.putParcelableArrayListExtra("selectedImages", new ArrayList<>(selectedImageUris));
-    setResult(Activity.RESULT_OK, resultIntent);
+    ArrayList<Uri> validUris = new ArrayList<>();
+
+    for (Uri uri : selectedImageUris) {
+      if (uri != null) {
+        validUris.add(uri);
+      } else {
+        Log.e("CustomImagePickerActivity", "Found null URI in selected images.");
+      }
+    }
+
+    if (!validUris.isEmpty()) {
+      resultIntent.putParcelableArrayListExtra("selectedImages", validUris);
+      setResult(Activity.RESULT_OK, resultIntent);
+    } else {
+      Log.e("CustomImagePickerActivity", "No valid images to return.");
+      setResult(Activity.RESULT_CANCELED);
+    }
+
     finish();
   }
 }

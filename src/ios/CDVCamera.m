@@ -93,7 +93,7 @@ static NSString* toBase64(NSData* data) {
 @end
 
 
-@interface CDVCamera ()
+@interface CDVCamera () <CustomImagePickerDelegate>
 
 @property (readwrite, assign) BOOL hasPendingOperation;
 
@@ -209,7 +209,7 @@ static NSString* toBase64(NSData* data) {
 - (void)showCameraPicker:(NSString*)callbackId withOptions:(CDVPictureOptions *) pictureOptions {
     dispatch_async(dispatch_get_main_queue(), ^{
         CustomImagePicker *imagePicker = [[CustomImagePicker alloc] init];
-        imagePicker.delegate = self; // Set delegate if needed
+        imagePicker.delegate = self; // Set delegate to self
         [self.viewController presentViewController:imagePicker animated:YES completion:nil];
     });
 }
@@ -833,6 +833,35 @@ static NSString* toBase64(NSData* data) {
     if (options.saveToPhotoAlbum) {
         UIImageWriteToSavedPhotosAlbum([[UIImage alloc] initWithData:self.data], nil, nil, nil);
     }
+}
+
+- (void)didSelectImages:(NSArray<UIImage *> *)images {
+    NSMutableArray *imagePaths = [NSMutableArray array];
+    
+    for (UIImage *image in images) {
+        // Create a unique file name
+        NSString *fileName = [NSString stringWithFormat:@"image_%@.jpg", [[NSUUID UUID] UUIDString]];
+        NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
+        
+        // Save the image as JPEG
+        NSData *imageData = UIImageJPEGRepresentation(image, 1.0); // Adjust quality as needed
+        if ([imageData writeToFile:filePath atomically:YES]) {
+            [imagePaths addObject:filePath]; // Add the file path to the array
+        } else {
+            NSLog(@"Failed to save image to path: %@", filePath);
+        }
+    }
+    
+    // Send the file paths back to the Cordova webview
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:imagePaths];
+    [self.commandDelegate sendPluginResult:result callbackId:self.pickerController.callbackId];
+    
+    NSLog(@"Selected image paths: %@", imagePaths);
+}
+
+- (void)didCancelImageSelection {
+    // Handle cancellation
+    NSLog(@"Image selection was cancelled.");
 }
 
 @end

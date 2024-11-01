@@ -1,12 +1,10 @@
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
 
-
 @protocol CustomImagePickerDelegate <NSObject>
 - (void)didSelectImages:(NSArray<UIImage *> *)images;
 - (void)didCancelImageSelection;
 @end
-
 
 @interface CustomImagePicker : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
 
@@ -45,6 +43,22 @@
     
     // Load images
     [self loadImages];
+
+    // Add Done button
+    UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [doneButton setTitle:@"Done" forState:UIControlStateNormal];
+    doneButton.backgroundColor = [UIColor blueColor]; // Set a visible color for testing
+    doneButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
+    [doneButton addTarget:self action:@selector(returnSelectedImages) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:doneButton];
+
+    // Set constraints for the button
+    [NSLayoutConstraint activateConstraints:@[
+        [doneButton.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [doneButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [doneButton.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20],
+        [doneButton.heightAnchor constraintEqualToConstant:40]
+    ]];
 }
 
 - (void)loadImages {
@@ -61,8 +75,6 @@
 }
 
 // Implement UICollectionViewDelegate and UICollectionViewDataSource methods
-// Handle selection of images and store them in self.selectedAssets
-
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     return self.allAssets.count; // Return the number of images
 }
@@ -110,19 +122,21 @@
     NSMutableArray *selectedImages = [NSMutableArray array];
     
     for (PHAsset *asset in self.selectedAssets) {
-        // Convert PHAsset to UIImage
         PHImageManager *imageManager = [PHImageManager defaultManager];
         [imageManager requestImageForAsset:asset
                           targetSize:PHImageManagerMaximumSize
                          contentMode:PHImageContentModeAspectFill
-                             options:nil
-                       resultHandler:^(UIImage *result, NSDictionary *info) {
+                                options:nil
+                          resultHandler:^(UIImage *result, NSDictionary *info) {
             if (result) {
                 [selectedImages addObject:result];
             }
             // Check if all images have been processed
             if (selectedImages.count == self.selectedAssets.count) {
-                [self.delegate didSelectImages:selectedImages]; // Notify the delegate
+                NSLog(@"Delegate: %@", self.delegate); // Log the delegate
+                if ([self.delegate respondsToSelector:@selector(didSelectImages:)]) {
+                    [self.delegate didSelectImages:selectedImages]; // Notify the delegate
+                }
                 [self dismissViewControllerAnimated:YES completion:nil];
             }
         }];
