@@ -211,7 +211,11 @@
     
     if ([self.selectedAssets containsObject:asset]) {
         // Deselect the asset
+        NSInteger unselectedIndex = [self.selectedAssets indexOfObject:asset];
         [self.selectedAssets removeObject:asset];
+        
+        // Update badge labels for remaining selected assets
+        [self updateBadgeLabelsAfterUnselectionAtIndex:unselectedIndex];
     } else {
         // Select the asset
         [self.selectedAssets addObject:asset];
@@ -219,6 +223,21 @@
     
     // Reload the cell to update its appearance
     [collectionView reloadItemsAtIndexPaths:@[indexPath]];
+}
+
+// Method to update badge labels after an image is unselected
+- (void)updateBadgeLabelsAfterUnselectionAtIndex:(NSInteger)unselectedIndex {
+    for (NSInteger i = unselectedIndex; i < self.selectedAssets.count; i++) {
+        PHAsset *asset = self.selectedAssets[i];
+        UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:[self.allAssets indexOfObject:asset] inSection:0]];
+        
+        if (cell) {
+            UILabel *badgeLabel = [cell.contentView viewWithTag:100]; // Assuming tag 100 is used for the badge
+            if (badgeLabel) {
+                badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)]; // Update badge text
+            }
+        }
+    }
 }
 
 // Method to handle cancel action

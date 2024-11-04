@@ -70,7 +70,7 @@
                   android:resource="@xml/camera_provider_paths"/>
           </provider>
           
-          <activity android:name="org.apache.cordova.camera.CustomImagePickerActivity" />
+          <activity android:name="org.apache.cordova.camera.CustomImagePickerActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
         </config-file>
 
         <config-file target="AndroidManifest.xml" parent="queries">

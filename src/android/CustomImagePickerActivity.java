@@ -121,21 +121,62 @@ public class CustomImagePickerActivity extends Activity {
       .load(imageUri)
       .into(imageView);
 
-    // Set an OnClickListener to handle image selection
-    itemView.setOnClickListener(v -> {
-      Log.e("CustomImagePickerActivity", String.valueOf(v));
-      Log.e("CustomImagePickerActivity", String.valueOf(imageUri));
-
-      if (!selectedImageUris.contains(imageUri)) {
-        selectedImageUris.add(imageUri);
-        selectionIndicator.setText(String.valueOf(selectedImageUris.size())); // Update selection number
-        selectionIndicator.setVisibility(View.VISIBLE); // Show the selection indicator
-      } else {
-        selectedImageUris.remove(imageUri);
-        selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
-      }
-    });
     imageContainer.addView(itemView);
+  }
+
+  // New method to update selection indicators
+  void updateSelectionIndicators(int unselectedIndex) {
+    Log.e("##################### updateSelectionIndicators", "##################### updateSelectionIndicators");
+
+    // Loop through the selected images
+    for (int i = 0; i < selectedImageUris.size(); i++) {
+        Uri selectedUri = selectedImageUris.get(i);
+        int indexInImageUris = imageUris.indexOf(selectedUri);
+
+        if (indexInImageUris != -1) {
+            View child = imageContainer.getChildAt(indexInImageUris);
+            if (child != null) { // Check if child is not null
+                TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
+
+                // Check if selectionIndicator is not null
+                if (selectionIndicator != null) {
+                    // Update selection number
+                    selectionIndicator.setText(String.valueOf(i + 1)); // Update selection number
+                }
+            }
+        }
+    }
+
+    // Decrease the text for all selected indices greater than the unselected index
+    for (int i = unselectedIndex; i < selectedImageUris.size(); i++) {
+        Uri selectedUri = selectedImageUris.get(i);
+        int indexInImageUris = imageUris.indexOf(selectedUri);
+
+        if (indexInImageUris != -1) {
+            View child = imageContainer.getChildAt(indexInImageUris);
+            if (child != null) { // Check if child is not null
+                TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
+
+                // Check if selectionIndicator is not null
+                if (selectionIndicator != null) {
+                    // Decrease the text by 1 for all selected indices greater than the unselected index
+                    selectionIndicator.setText(String.valueOf(i)); // Update selection number
+                }
+            }
+        }
+    }
+
+    // Hide indicators for unselected images
+    for (int i = 0; i < imageContainer.getChildCount(); i++) {
+        View child = imageContainer.getChildAt(i);
+        TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
+        Uri uri = imageUris.get(i);
+
+        // If the URI is not in the selected list, hide the indicator
+        if (!selectedImageUris.contains(uri) && selectionIndicator != null) {
+            selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
+        }
+    }
   }
 
   private Bitmap loadBitmapFromUri(Uri uri) {

@@ -40,8 +40,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     Glide.with(context)
       .load(imageUri)
       .into(holder.imageView); // Load the image into the ImageView
-    holder.selectionIndicator.setText(String.valueOf(position + 1)); // Update selection number
 
+       if (((CustomImagePickerActivity) context).selectedImageUris.contains(imageUri)) {
+        holder.selectionIndicator.setText(String.valueOf(((CustomImagePickerActivity) context).selectedImageUris.indexOf(imageUri) + 1)); // Update selection number
+        holder.selectionIndicator.setVisibility(View.VISIBLE); // Show the selection indicator
+    } else {
+        holder.selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
+    }
+    
     holder.itemView.setOnClickListener(v -> {
 
       // Handle selection logic here
@@ -53,8 +59,10 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         holder.selectionIndicator.setVisibility(View.VISIBLE); // Show the selection indicator
       } else {
         // If already selected, remove from the selected list
+        int unselectedIndex = ((CustomImagePickerActivity) context).selectedImageUris.indexOf(imageUri);
         ((CustomImagePickerActivity) context).selectedImageUris.remove(imageUri);
         holder.selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
+        ((CustomImagePickerActivity) context).updateSelectionIndicators(unselectedIndex); // Update other selection indicators
       }
     });
  
