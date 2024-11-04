@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -126,56 +127,23 @@ public class CustomImagePickerActivity extends Activity {
 
   // New method to update selection indicators
   void updateSelectionIndicators(int unselectedIndex) {
-    Log.e("##################### updateSelectionIndicators", "##################### updateSelectionIndicators");
-
-    // Loop through the selected images
-    for (int i = 0; i < selectedImageUris.size(); i++) {
-        Uri selectedUri = selectedImageUris.get(i);
-        int indexInImageUris = imageUris.indexOf(selectedUri);
-
-        if (indexInImageUris != -1) {
-            View child = imageContainer.getChildAt(indexInImageUris);
-            if (child != null) { // Check if child is not null
-                TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
-
-                // Check if selectionIndicator is not null
-                if (selectionIndicator != null) {
-                    // Update selection number
-                    selectionIndicator.setText(String.valueOf(i + 1)); // Update selection number
-                }
-            }
-        }
-    }
-
-    // Decrease the text for all selected indices greater than the unselected index
+    // Loop through the selected image URIs starting from the unselected index
     for (int i = unselectedIndex; i < selectedImageUris.size(); i++) {
-        Uri selectedUri = selectedImageUris.get(i);
-        int indexInImageUris = imageUris.indexOf(selectedUri);
-
-        if (indexInImageUris != -1) {
-            View child = imageContainer.getChildAt(indexInImageUris);
-            if (child != null) { // Check if child is not null
-                TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
-
-                // Check if selectionIndicator is not null
-                if (selectionIndicator != null) {
-                    // Decrease the text by 1 for all selected indices greater than the unselected index
-                    selectionIndicator.setText(String.valueOf(i)); // Update selection number
-                }
-            }
+      Uri selectedUri = selectedImageUris.get(i);
+      
+      // Find the corresponding view in the RecyclerView
+      int position = imageUris.indexOf(selectedUri);
+      if (position != -1) {
+        // Get the ViewHolder for the selected item
+        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(position);
+        if (viewHolder != null) {
+          // Update the selection indicator
+          TextView selectionIndicator = viewHolder.itemView.findViewById(R.id.selectionIndicator);
+          if (selectionIndicator != null) {
+            selectionIndicator.setText(String.valueOf(i + 1)); // Update the text to reflect the new order
+          }
         }
-    }
-
-    // Hide indicators for unselected images
-    for (int i = 0; i < imageContainer.getChildCount(); i++) {
-        View child = imageContainer.getChildAt(i);
-        TextView selectionIndicator = child.findViewById(R.id.selectionIndicator);
-        Uri uri = imageUris.get(i);
-
-        // If the URI is not in the selected list, hide the indicator
-        if (!selectedImageUris.contains(uri) && selectionIndicator != null) {
-            selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
-        }
+      }
     }
   }
 
