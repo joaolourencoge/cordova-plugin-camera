@@ -135,7 +135,7 @@
             badgeLabel.tag = 100; // Set a tag to identify the badge later
             badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)[self.selectedAssets indexOfObject:asset] + 1]; // Display the index + 1
             badgeLabel.textAlignment = NSTextAlignmentCenter;
-            badgeLabel.backgroundColor = [UIColor redColor];
+            badgeLabel.backgroundColor = [UIColor colorWithRed:179/255.0 green:0/255.0 blue:27/255.0 alpha:1.0]; // Changed to #B3001B
             badgeLabel.textColor = [UIColor whiteColor];
             badgeLabel.layer.cornerRadius = 15; // Half of the width/height for a circle
             badgeLabel.layer.masksToBounds = YES;
